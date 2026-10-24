@@ -329,10 +329,12 @@ with tabs[1]:
     L = len(model.W)                                # 3
     acts = [cache[f"A{l}"][0] for l in range(L + 1)]   # activations of every layer
 
-    left, right = st.columns([3, 2])
+    col_l, col_r = st.columns([3, 2])
+    left = col_l.container(border=True)
+    right = col_r.container(border=True)
 
     with right:
-        st.markdown("**Inspect a neuron**")
+        st.markdown("**🔬 Inspect a neuron**")
         layer = st.selectbox("Layer", [1, 2, 3], format_func=lambda l: LAYER_NAMES[l])
         neuron = st.selectbox("Neuron", list(range(model.layer_sizes[layer])),
                               format_func=lambda k: f"#{k+1}")
@@ -520,10 +522,12 @@ with tabs[2]:
                            
 with tabs[3]:
     st.subheader("E · Live predictions and model interpretation")
-    left, right = st.columns(2)
+    col_l, col_r = st.columns(2)
+    left = col_l.container(border=True)
+    right = col_r.container(border=True)
 
     with left:
-        st.markdown("**Enter sensor readings**")
+        st.markdown("**🎛️ Enter sensor readings**")
         values = []
         labels = ["Temperature (°C)", "Vibration (mm/s)", "Pressure (kPa)"]
         for feature, label in zip(FEATURES, labels):
@@ -543,7 +547,7 @@ with tabs[3]:
     with right:
         probs = model.predict_proba(x_scaled)[0]      # [P(overheat), P(fault)]
 
-        st.markdown("**Predicted probabilities**")
+        st.markdown("**📈 Predicted probabilities**")
         colours = ["#ea580c" if p >= threshold else "#94a3b8" for p in probs]
         fig = go.Figure(go.Bar(x=probs, y=["Overheat alert", "Fault alert"], orientation="h",
                                marker_color=colours,
