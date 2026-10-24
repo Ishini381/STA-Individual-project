@@ -1,0 +1,9 @@
+experiment,learning_rate,epochs,activation,batch_size,seed,final_train_loss,final_val_loss,final_train_acc,final_val_acc,best_val_loss,best_val_epoch
+"1. Learning rate (100 epochs, ReLU)",0.001,100,ReLU,16,42,0.6352,0.6659,0.6032,0.6481,0.6659,100
+"1. Learning rate (100 epochs, ReLU)",0.01,100,ReLU,16,42,0.491,0.494,0.7778,0.8148,0.494,100
+"1. Learning rate (100 epochs, ReLU)",0.1,100,ReLU,16,42,0.4405,0.465,0.7897,0.8333,0.4572,35
+"2. Activation (lr 0.01, 100 epochs)",0.01,100,ReLU,16,42,0.491,0.494,0.7778,0.8148,0.494,100
+"2. Activation (lr 0.01, 100 epochs)",0.01,100,Sigmoid,16,42,0.6431,0.55,0.6468,0.8333,0.55,100
+"3. Epochs (lr 0.01, ReLU)",0.01,20,ReLU,16,42,0.6012,0.6225,0.6667,0.7037,0.6225,20
+"3. Epochs (lr 0.01, ReLU)",0.01,100,ReLU,16,42,0.491,0.494,0.7778,0.8148,0.494,100
+"3. Epochs (lr 0.01, ReLU)",0.01,300,ReLU,16,42,0.4641,0.461,0.7698,0.8148,0.461,300
