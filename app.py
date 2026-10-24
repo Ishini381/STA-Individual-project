@@ -465,7 +465,7 @@ with tabs[2]:
     st.subheader("D · Learning and error visualisation")
 
     if history is None:
-        st.info("Press **▶ Train** in the sidebar to record a training history.")
+        st.info("👈 Press **▶ Train / Retrain** in the sidebar to record a training history.")
     else:
         n_ep = len(history["epoch"])
         view = st.slider("Step through training: show up to epoch", 1, n_ep, n_ep)
@@ -708,7 +708,7 @@ with tabs[4]:
         st.download_button("⬇ Download run history (CSV)", log.to_csv(index=False),
                            "run_history.csv", "text/csv")
     else:
-        st.caption("Every time you press ▶ Train in the sidebar, it is logged here.")
+        st.caption("Every time you press ▶ Train / Retrain in the sidebar, it is logged here.")
 
 with tabs[5]:
     st.subheader("📘 How a neural network learns, in four steps")
@@ -749,7 +749,7 @@ Two independent sigmoids give two separate probabilities, which can both be high
 
 ##### How to use this dashboard
 1. **A · Data**: see the dataset, the 126/27/27 split and the scaling.
-2. **Sidebar**: choose a learning rate, epochs and activation, then press **▶ Train**.
+2. **Sidebar**: choose a learning rate, epochs and activation, then press **▶ Train / Retrain**.
 3. **D · Learning curves**: watch the training and validation loss change.
 4. **B · Network**: pick a machine and a neuron to see its z and a values.
 5. **E · Predictions**: move the sliders to get live alert probabilities.
