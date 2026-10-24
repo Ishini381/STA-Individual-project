@@ -560,8 +560,8 @@ with tabs[3]:
 
         d = st.columns(2)
         for col, name, p in zip(d, ["Overheat", "Fault"], probs):
-            decision = "🚨 ALERT (1)" if p >= threshold else "✅ no alert (0)"
-            col.metric(f"{name} decision", decision, f"p = {p:.3f}", delta_color="off")
+            decision = "🚨 Alert" if p >= threshold else "✅ No alert"
+            col.metric(f"{name} decision (1 = alert)", decision, f"p = {p:.3f}", delta_color="off")
 
         st.caption("Two **independent** sigmoid outputs: the probabilities do not add up to 1, "
                    "so both alerts can be on at the same time.")
