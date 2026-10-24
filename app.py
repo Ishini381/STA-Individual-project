@@ -148,19 +148,36 @@ model = st.session_state.model
 history = st.session_state.history
 
 with st.sidebar:
+    st.markdown("**Status**")
     if st.session_state.status == "untrained":
-        st.info(f"**Status:** untrained (random weights, seed {model.seed})")
+        st.info(f"⚪ **Untrained**  \nRandom weights from seed {model.seed}")
     else:
-        st.success(f"**Status:** trained · {model.epochs_trained} epochs total · "
-                   f"last run = **{st.session_state.run_mode}** · {model.hidden_activation}")
-    st.caption("Optimiser: mini-batch SGD (batch 16). Data split seed: 42.")
+        st.success(f"🟢 **Trained** · {model.epochs_trained} epochs total  \n"
+                   f"Last run: **{st.session_state.run_mode}** · {model.hidden_activation}")
+    st.caption("Optimiser: mini-batch SGD (batch 16) · Data split seed: 42")
 
-st.title("🧠 Neural Network Learning Lab — How Does a Neural Network Learn?")
-st.caption("A 3–5–4–2 network predicts two independent machine alerts from three sensors. "
-           "Synthetic data — not for real safety decisions.")
+if history is None:
+    status_chip = "⚪ Model untrained"
+else:
+    status_chip = (f"🟢 Trained · {model.epochs_trained} epochs · "
+                   f"val loss {history['val_loss'][-1]:.3f}")
 
-tabs = st.tabs(["A · Data", "B · Network", "D · Learning curves",
-                "E · Predictions", "F · Experiments", "📘 How it works"])
+st.markdown(f"""
+<div class="hero">
+  <h1>🧠 Neural Network Learning Lab</h1>
+  <p>How does a neural network learn? Watch a 3–5–4–2 network learn to predict
+     two independent machine alerts from three sensor readings.</p>
+  <div class="chips">
+    <span class="chip">3 inputs → 5 → 4 → 2 outputs</span>
+    <span class="chip">{model.hidden_activation} hidden layers</span>
+    <span class="chip">Sigmoid outputs · BCE loss · SGD</span>
+    <span class="chip">{status_chip}</span>
+  </div>
+</div>
+""", unsafe_allow_html=True)
+
+tabs = st.tabs(["📊 A · Data", "🕸️ B · Network", "📉 D · Learning curves",
+                "🎯 E · Predictions", "🧪 F · Experiments", "📘 How it works"])
 
 with tabs[0]:
     st.subheader("A · Input data and preprocessing")
