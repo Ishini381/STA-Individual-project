@@ -31,10 +31,11 @@ streamlit run app.py
 
 It opens at http://localhost:8501. Press `Ctrl + C` in the terminal to stop it.
 
-## 3. Reproduce the experiments
+## 3. Reproduce the experiments and check the network
 
 ```bash
 python experiments.py      # prints the experiment table and writes experiment_results.csv
+python check_network.py    # checks weight shapes, compares back-propagation with numerical gradients, test-trains ReLU and sigmoid
 ```
 
 ## 4. What is in the dashboard
@@ -46,7 +47,8 @@ python experiments.py      # prints the experiment table and writes experiment_r
 | C · Training controls | sidebar | learning rate 0.001–0.1, epochs 20–500, ReLU/sigmoid, initialisation seed, fresh-vs-continue mode, Train, Reset, training status indicator |
 | D · Learning curves | tab D | genuine per-epoch training & validation BCE on one chart with best-validation marker, current metrics, automatic interpretation (improving / slowing / oscillating / overfitting), accuracy curves, gradient-norm chart, step-through-by-epoch slider, CSV export |
 | E · Predictions | tab E | three sliders → standardised inputs → two probabilities and alert decisions with an adjustable threshold (default 0.5); test-set summary behind a button with BCE, binary accuracy, exact match and per-label accuracy/precision/recall/TP/FP/FN/TN |
-| F · Experiments | tab F | learning-rate, activation and epoch experiments under identical seeds; comparison table, overlaid train/validation curves, final-loss bar chart, CSV export, and a log of every sidebar training run (fresh or continued) |
+| F · Experiments | tab F | learning-rate, activation and epoch experiments under identical seeds; comparison table, overlaid train/validation curves, final-loss bar chart, automatic written conclusions (best configuration, early validation minimum, diminishing gains from more epochs), CSV export, and a log of every sidebar training run (fresh or continued) |
+| How it works | tab 📘 | beginner guide: forward propagation, BCE loss, back-propagation, gradient-descent update rule, ReLU and sigmoid curves with their slopes, why two sigmoids instead of softmax, how to use the dashboard |
 
 ## 5. Design choices
 
@@ -65,9 +67,10 @@ python experiments.py      # prints the experiment table and writes experiment_r
 
 ```
 app.py                  Streamlit dashboard (Panels A–F)
-nn_core.py              NumPy MLP: activations, BCE loss, forward pass, back-propagation,   SGD training loop
+nn_core.py              NumPy MLP: activations, BCE loss, forward pass, back-propagation, SGD training loop
 data_utils.py           CSV loading, seeded 126/27/27 split, training-only standardisation
 experiments.py          the three controlled experiments; run directly to export the results
+check_network.py        gradient check and quick training test for nn_core.py
 experiment_results.csv  exported experiment table
 sensor_dataset.csv      supplied synthetic data
 requirements.txt        Python dependencies
