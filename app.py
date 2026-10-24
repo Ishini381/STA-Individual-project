@@ -537,69 +537,6 @@ with tabs[3]:
                 })
             st.dataframe(pd.DataFrame(rows), hide_index=True, width="stretch")
 
-with tabs[4]:
-    st.subheader("F · Controlled experiments")
-    st.markdown("Each configuration starts from a **fresh model with the same seed** "
-                "(identical starting weights), the same data split and the same optimiser "
-                "(mini-batch SGD). Only the setting being studied changes.")
-
-    exp_name = st.selectbox("Experiment", list(EXPERIMENT_SETS.keys()))
-
-    c1, c2 = st.columns(2)
-    if c1.button("▶ Run this experiment", type="primary"):
-        with st.spinner("Training each configuration..."):
-            st.session_state.exp_results[exp_name] = run_set(data, EXPERIMENT_SETS[exp_name])
-    if c2.button("▶ Run ALL three experiments"):
-        with st.spinner("Running all experiments..."):
-            for name, configs in EXPERIMENT_SETS.items():
-                st.session_state.exp_results[name] = run_set(data, configs)
-
-        if exp_name in st.session_state.exp_results:
-            table, hists = st.session_state.exp_results[exp_name]
-            st.dataframe(table, hide_index=True, width="stretch")
-
-            colours = ["#2563eb", "#ea580c", "#16a34a"]
-            fig = go.Figure()
-            for (_, row), h, col in zip(table.iterrows(), hists, colours):
-                label = f"lr={row['learning_rate']}, {row['activation']}, {row['epochs']} ep"
-                fig.add_scatter(x=h["epoch"], y=h["train_loss"], name=f"train · {label}",
-                            line=dict(color=col, dash="dot"))
-                fig.add_scatter(x=h["epoch"], y=h["val_loss"], name=f"val · {label}",
-                            line=dict(color=col, width=3))
-            fig.update_layout(title=exp_name, xaxis_title="Epoch",
-                          yaxis_title="Binary cross-entropy", template="plotly_white",
-                          height=450, legend=dict(orientation="h", y=-0.25))
-            st.plotly_chart(fig, width="stretch")
-
-            bars = table.assign(config=[f"lr={r.learning_rate} {r.activation} {r.epochs}ep"
-                                    for r in table.itertuples()])
-            fig2 = px.bar(bars, x="config", y=["final_train_loss", "final_val_loss"],
-                      barmode="group", template="plotly_white", height=320,
-                      labels={"value": "BCE", "variable": ""})
-            st.plotly_chart(fig2, width="stretch")
-            st.markdown("##### What do these results show?")
-            for m in experiment_findings(exp_name, table):
-                st.markdown("- " + m)
-        else:
-            st.info("Click a Run button above.")
-
-        if st.session_state.exp_results:
-            all_results = pd.concat([t.assign(experiment=name)
-                                 for name, (t, _) in st.session_state.exp_results.items()])
-            st.download_button("⬇ Export all experiment results (CSV)",
-                           all_results.to_csv(index=False),
-                           "experiment_results.csv", "text/csv")
-
-        st.divider()
-        st.markdown("##### Your training-run history (from the sidebar)")
-        if st.session_state.run_log:
-            log = pd.DataFrame(st.session_state.run_log)
-            st.dataframe(log, hide_index=True, width="stretch")
-            st.download_button("⬇ Download run history (CSV)", log.to_csv(index=False),
-                           "run_history.csv", "text/csv")
-        else:
-            st.caption("Every time you press ▶ Train in the sidebar, it is logged here.")
-
 def experiment_findings(name, table):
     """Turn an experiment's results table into plain-language conclusions."""
     msgs = []
@@ -637,6 +574,71 @@ def experiment_findings(name, table):
                     "loss stops falling; after that the model starts to overfit "
                     "(see lr = 0.1 in Experiment 1). So more epochs do **not** always help.")
     return msgs
+
+
+with tabs[4]:
+    st.subheader("F · Controlled experiments")
+    st.markdown("Each configuration starts from a **fresh model with the same seed** "
+                "(identical starting weights), the same data split and the same optimiser "
+                "(mini-batch SGD). Only the setting being studied changes.")
+
+    exp_name = st.selectbox("Experiment", list(EXPERIMENT_SETS.keys()))
+
+    c1, c2 = st.columns(2)
+    if c1.button("▶ Run this experiment", type="primary"):
+        with st.spinner("Training each configuration..."):
+            st.session_state.exp_results[exp_name] = run_set(data, EXPERIMENT_SETS[exp_name])
+    if c2.button("▶ Run ALL three experiments"):
+        with st.spinner("Running all experiments..."):
+            for name, configs in EXPERIMENT_SETS.items():
+                st.session_state.exp_results[name] = run_set(data, configs)
+
+    if exp_name in st.session_state.exp_results:
+        table, hists = st.session_state.exp_results[exp_name]
+        st.dataframe(table, hide_index=True, width="stretch")
+
+        colours = ["#2563eb", "#ea580c", "#16a34a"]
+        fig = go.Figure()
+        for (_, row), h, col in zip(table.iterrows(), hists, colours):
+            label = f"lr={row['learning_rate']}, {row['activation']}, {row['epochs']} ep"
+            fig.add_scatter(x=h["epoch"], y=h["train_loss"], name=f"train · {label}",
+                            line=dict(color=col, dash="dot"))
+            fig.add_scatter(x=h["epoch"], y=h["val_loss"], name=f"val · {label}",
+                            line=dict(color=col, width=3))
+        fig.update_layout(title=exp_name, xaxis_title="Epoch",
+                          yaxis_title="Binary cross-entropy", template="plotly_white",
+                          height=450, legend=dict(orientation="h", y=-0.25))
+        st.plotly_chart(fig, width="stretch")
+
+        bars = table.assign(config=[f"lr={r.learning_rate} {r.activation} {r.epochs}ep"
+                                    for r in table.itertuples()])
+        fig2 = px.bar(bars, x="config", y=["final_train_loss", "final_val_loss"],
+                      barmode="group", template="plotly_white", height=320,
+                      labels={"value": "BCE", "variable": ""})
+        st.plotly_chart(fig2, width="stretch")
+
+        st.markdown("##### What do these results show?")
+        for m in experiment_findings(exp_name, table):
+            st.markdown("- " + m)
+    else:
+        st.info("Click a Run button above.")
+
+    if st.session_state.exp_results:
+        all_results = pd.concat([t.assign(experiment=name)
+                                 for name, (t, _) in st.session_state.exp_results.items()])
+        st.download_button("⬇ Export all experiment results (CSV)",
+                           all_results.to_csv(index=False),
+                           "experiment_results.csv", "text/csv")
+
+    st.divider()
+    st.markdown("##### Your training-run history (from the sidebar)")
+    if st.session_state.run_log:
+        log = pd.DataFrame(st.session_state.run_log)
+        st.dataframe(log, hide_index=True, width="stretch")
+        st.download_button("⬇ Download run history (CSV)", log.to_csv(index=False),
+                           "run_history.csv", "text/csv")
+    else:
+        st.caption("Every time you press ▶ Train in the sidebar, it is logged here.")
 
 with tabs[5]:
     st.subheader("📘 How a neural network learns, in four steps")
@@ -684,4 +686,5 @@ Two independent sigmoids give two separate probabilities, which can both be high
 6. **F · Experiments**: compare settings under identical starting conditions.
 
 *The data are synthetic and must not be used for real safety decisions.*
-""")   
+""")
+    
