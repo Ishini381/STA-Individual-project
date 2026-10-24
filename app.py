@@ -10,6 +10,50 @@ from experiments import EXPERIMENT_SETS, run_set
 
 st.set_page_config(page_title="Neural Network Learning Lab", page_icon="🧠", layout="wide")
 
+# ---------- one consistent look for every chart ----------
+import plotly.io as pio
+pio.templates["lab"] = go.layout.Template(pio.templates["plotly_white"])
+pio.templates["lab"].layout.update(
+    font=dict(family="Inter, Segoe UI, sans-serif", size=13, color="#334155"),
+    title=dict(font=dict(size=15, color="#0f172a")),
+    paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+    margin=dict(l=10, r=10, t=50, b=10),
+    hoverlabel=dict(font_size=12),
+)
+pio.templates.default = "lab"
+
+# ---------- page styling ----------
+st.markdown("""
+<style>
+.block-container {padding-top: 3.5rem; padding-bottom: 3rem; max-width: 1400px;}
+
+/* header banner */
+.hero {background: linear-gradient(120deg, #1e3a8a 0%, #2563eb 60%, #3b82f6 100%);
+       color: #fff; padding: 1.4rem 1.8rem; border-radius: 16px; margin-bottom: 1.2rem;
+       box-shadow: 0 6px 20px rgba(37, 99, 235, 0.25);}
+.hero h1 {color: #fff; font-size: 1.9rem; margin: 0 0 0.3rem 0; padding: 0;}
+.hero p {color: #dbeafe; margin: 0; font-size: 1rem;}
+.hero .chips {margin-top: 0.8rem;}
+.hero .chip {display: inline-block; background: rgba(255,255,255,0.16); color: #fff;
+             padding: 0.2rem 0.7rem; border-radius: 999px; font-size: 0.82rem; margin: 0 0.35rem 0.3rem 0;}
+
+/* metric cards */
+[data-testid="stMetric"] {background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px;
+                          padding: 0.8rem 1rem; box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);}
+[data-testid="stMetricLabel"] {color: #64748b;}
+[data-testid="stMetricValue"] {font-size: 1.7rem;}
+
+/* tabs */
+button[data-baseweb="tab"] {font-size: 1rem; font-weight: 600; padding: 0.6rem 1rem;}
+
+/* sidebar */
+[data-testid="stSidebar"] {background: #ffffff; border-right: 1px solid #e2e8f0;}
+
+/* section headings */
+h3 {color: #1e3a8a;}
+</style>
+""", unsafe_allow_html=True)
+
 @st.cache_data
 def get_data():
     df = load_data("sensor_dataset.csv")
