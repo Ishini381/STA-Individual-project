@@ -25,7 +25,7 @@ pip install -r requirements.txt
 From this folder (so `sensor_dataset.csv` is found):
 
 ```bash
-streamlit run app.py
+python -m streamlit run app.py.
 ```
 
 It opens at http://localhost:8501.
