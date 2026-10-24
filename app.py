@@ -51,6 +51,10 @@ button[data-baseweb="tab"] {font-size: 1rem; font-weight: 600; padding: 0.6rem 1
 
 /* section headings */
 h3 {color: #1e3a8a;}
+
+/* footer */
+.footer {color: #64748b; font-size: 0.82rem; text-align: center;
+         border-top: 1px solid rgba(128,128,128,0.25); margin-top: 2.5rem; padding-top: 0.8rem;}
 </style>
 """, unsafe_allow_html=True)
 
@@ -752,13 +756,21 @@ with tabs[4]:
     c1, c2 = st.columns(2)
     if c1.button("▶ Run this experiment", type="primary",
                  help="Trains each configuration of the selected experiment from fresh weights."):
-        with st.spinner("Training each configuration..."):
-            st.session_state.exp_results[exp_name] = run_set(data, EXPERIMENT_SETS[exp_name])
+        try:
+            with st.spinner("Training each configuration..."):
+                st.session_state.exp_results[exp_name] = run_set(data, EXPERIMENT_SETS[exp_name])
+            st.toast(f"{exp_name.split('(')[0].strip()} finished", icon="🧪")
+        except Exception as e:
+            st.error(f"😕 **The experiment could not finish** ({e}). Please try again.")
     if c2.button("▶ Run ALL three experiments",
                  help="Runs all 8 configurations. Takes a few seconds."):
-        with st.spinner("Running all experiments..."):
-            for name, configs in EXPERIMENT_SETS.items():
-                st.session_state.exp_results[name] = run_set(data, configs)
+        try:
+            with st.spinner("Running all experiments..."):
+                for name, configs in EXPERIMENT_SETS.items():
+                    st.session_state.exp_results[name] = run_set(data, configs)
+            st.toast("All three experiments finished — switch between them above", icon="🧪")
+        except Exception as e:
+            st.error(f"😕 **The experiments could not finish** ({e}). Please try again.")
 
     if exp_name in st.session_state.exp_results:
         table, hists = st.session_state.exp_results[exp_name]
@@ -854,4 +866,13 @@ Two independent sigmoids give two separate probabilities, which can both be high
 
 *The data are synthetic and must not be used for real safety decisions.*
 """)
+
+st.markdown(
+    '<div class="footer">'
+    '🧠 <b>Neural Network Learning Lab</b> · Neural Networks / Data Science individual assignment<br>'
+    'NumPy 3–5–4–2 network · mini-batch SGD · built with Streamlit, NumPy, pandas &amp; Plotly<br>'
+    '⚠️ Synthetic classroom data — not for real safety decisions · '
+    'AI assistance (Claude) used for guidance, as allowed by course policy'
+    '</div>',
+    unsafe_allow_html=True)
     
