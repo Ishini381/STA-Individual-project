@@ -111,7 +111,7 @@ st.caption("A 3–5–4–2 network predicts two independent machine alerts from
            "Synthetic data — not for real safety decisions.")
 
 tabs = st.tabs(["A · Data", "B · Network", "D · Learning curves",
-                "E · Predictions", "F · Experiments"])
+                "E · Predictions", "F · Experiments", "📘 How it works"])
 
 with tabs[0]:
     st.subheader("A · Input data and preprocessing")
@@ -577,6 +577,9 @@ with tabs[4]:
                       barmode="group", template="plotly_white", height=320,
                       labels={"value": "BCE", "variable": ""})
             st.plotly_chart(fig2, width="stretch")
+            st.markdown("##### What do these results show?")
+            for m in experiment_findings(exp_name, table):
+                st.markdown("- " + m)
         else:
             st.info("Click a Run button above.")
 
@@ -596,4 +599,89 @@ with tabs[4]:
                            "run_history.csv", "text/csv")
         else:
             st.caption("Every time you press ▶ Train in the sidebar, it is logged here.")
-    
+
+def experiment_findings(name, table):
+    """Turn an experiment's results table into plain-language conclusions."""
+    msgs = []
+    best = table.loc[table["final_val_loss"].idxmin()]
+    msgs.append(f"Lowest final validation loss: **{best['final_val_loss']:.4f}** "
+                f"(lr = {best['learning_rate']}, {best['activation']}, {best['epochs']} epochs).")
+
+    # any run whose validation loss was lowest BEFORE the last epoch
+    for _, r in table.iterrows():
+        if r["best_val_epoch"] < r["epochs"]:
+            msgs.append(f"lr = {r['learning_rate']}, {r['activation']}, {r['epochs']} epochs: "
+                        f"validation loss was lowest at epoch **{r['best_val_epoch']}** "
+                        f"({r['best_val_loss']:.4f}), not at the end. Training longer made "
+                        f"validation worse, a sign of overfitting or oscillation.")
+
+    if name.startswith("1"):
+        msgs.append("A larger learning rate takes bigger steps: the loss falls faster at first "
+                    "but is less stable. A larger rate does not always mean better convergence.")
+    elif name.startswith("2"):
+        relu = table[table["activation"] == "ReLU"].iloc[0]
+        sig = table[table["activation"] == "Sigmoid"].iloc[0]
+        msgs.append(f"After the same number of epochs, training loss was "
+                    f"**{relu['final_train_loss']:.4f}** for ReLU and "
+                    f"**{sig['final_train_loss']:.4f}** for sigmoid. Sigmoid's slope is at most "
+                    f"0.25, so gradients shrink as they pass back through the layers and it "
+                    f"learns more slowly. ReLU's slope is 1 for active neurons.")
+    elif name.startswith("3"):
+        t = table.sort_values("epochs")
+        vals = t["final_val_loss"].tolist()
+        eps = t["epochs"].tolist()
+        gains = [f"{eps[i]}→{eps[i+1]} epochs: {vals[i] - vals[i+1]:+.4f}"
+                 for i in range(len(vals) - 1)]
+        msgs.append("Improvement in validation loss: " + "; ".join(gains) + ". "
+                    "The gains get smaller each time. More epochs help only until validation "
+                    "loss stops falling; after that the model starts to overfit "
+                    "(see lr = 0.1 in Experiment 1). So more epochs do **not** always help.")
+    return msgs
+
+with tabs[5]:
+    st.subheader("📘 How a neural network learns, in four steps")
+    st.markdown("""
+1. **Forward propagation.** Each neuron computes a weighted sum
+   *z = Σ(input × weight) + bias*, then applies an activation function.
+   Layer by layer, this turns 3 sensor readings into 2 probabilities.
+2. **Loss.** Binary cross-entropy measures how wrong the probabilities are:
+   *BCE = −mean[ y·log(p) + (1 − y)·log(1 − p) ]*. A confident wrong answer gives a large loss.
+3. **Back-propagation.** The chain rule works out, from the output backwards,
+   how much each weight and bias contributed to the loss (its gradient).
+4. **Gradient descent.** Each weight takes a small step against its gradient:
+   *w ← w − η · ∂Loss/∂w*, where η is the learning rate.
+   One pass over the 126 training rows is one **epoch**.
+""")
+
+    st.markdown("##### The activation functions and their slopes")
+    z = np.linspace(-5, 5, 200)
+    sig = 1 / (1 + np.exp(-z))
+    fig = go.Figure()
+    fig.add_scatter(x=z, y=np.maximum(0, z), name="ReLU", line=dict(color="#2563eb", width=3))
+    fig.add_scatter(x=z, y=(z > 0).astype(float), name="ReLU slope",
+                    line=dict(color="#2563eb", dash="dot"))
+    fig.add_scatter(x=z, y=sig, name="Sigmoid", line=dict(color="#ea580c", width=3))
+    fig.add_scatter(x=z, y=sig * (1 - sig), name="Sigmoid slope (max 0.25)",
+                    line=dict(color="#ea580c", dash="dot"))
+    fig.update_layout(xaxis_title="z (weighted sum)", yaxis_title="output",
+                      yaxis_range=[-0.2, 2], template="plotly_white", height=360)
+    st.plotly_chart(fig, width="stretch")
+    st.caption("Sigmoid's slope is never above 0.25, so gradients shrink layer by layer "
+               "(vanishing gradients). ReLU's slope is 1 when z > 0 and 0 when z < 0.")
+
+    st.markdown("""
+##### Why two sigmoid outputs instead of softmax?
+Overheat and fault are two **separate** yes/no questions, and some machines have both alerts.
+Softmax forces the outputs to add up to 1, so it can only choose one class.
+Two independent sigmoids give two separate probabilities, which can both be high.
+
+##### How to use this dashboard
+1. **A · Data**: see the dataset, the 126/27/27 split and the scaling.
+2. **Sidebar**: choose a learning rate, epochs and activation, then press **▶ Train**.
+3. **D · Learning curves**: watch the training and validation loss change.
+4. **B · Network**: pick a machine and a neuron to see its z and a values.
+5. **E · Predictions**: move the sliders to get live alert probabilities.
+6. **F · Experiments**: compare settings under identical starting conditions.
+
+*The data are synthetic and must not be used for real safety decisions.*
+""")   
