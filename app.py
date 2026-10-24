@@ -111,17 +111,37 @@ if train_btn:
     continuing = (mode == "Continue training current model"
                   and st.session_state.history is not None)
 
+    if mode == "Continue training current model" and st.session_state.history is None:
+        st.sidebar.info("ℹ️ There was no trained model to continue, so I started a "
+                        "**fresh** one from the seed instead.")
+
     if continuing and model.hidden_activation != act:
-        st.sidebar.error("You changed the activation. Choose 'Start fresh' instead.")
+        st.sidebar.warning(
+            f"⚠️ **Can't continue with a different activation.** The current model uses "
+            f"**{model.hidden_activation}**, but you selected **{act}**. "
+            f"Either switch the activation back to {model.hidden_activation}, "
+            f"or choose **Start fresh** to train a new {act} model.")
     else:
         if not continuing:
             new_model(act, int(seed))              # fresh weights from the seed
             model = st.session_state.model
 
-        with st.spinner(f"Training for {epochs} epochs..."):
-            hist, snaps = model.train(data["X_train"], data["Y_train"],
-                                      data["X_val"], data["Y_val"],
-                                      lr=lr, epochs=epochs, batch_size=16)
+        try:
+            with st.spinner(f"Training for {epochs} epochs..."):
+                hist, snaps = model.train(data["X_train"], data["Y_train"],
+                                          data["X_val"], data["Y_val"],
+                                          lr=lr, epochs=epochs, batch_size=16)
+        except Exception as e:
+            st.error(f"😕 **Training stopped unexpectedly** ({e}). Press **⟲ Reset**, "
+                     f"then **▶ Train / Retrain** again. If it keeps happening, try a smaller "
+                     f"learning rate.")
+            st.stop()
+
+        if not np.isfinite(hist["train_loss"][-1]):
+            st.error("😕 **The loss became infinite (NaN)** — the learning rate is too large "
+                     "for this network. Lower it and press **▶ Train / Retrain** again.")
+            new_model(act, int(seed))
+            st.stop()
 
         if continuing:                             # add new epochs to the old curve
             old = st.session_state.history
