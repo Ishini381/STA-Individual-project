@@ -18,70 +18,47 @@ def current_theme():
     except Exception:
         return "light"
 
-
-IS_DARK = current_theme() == "dark"
-P = {   # one colour palette per mode
-    "card":    "#111a2e" if IS_DARK else "#ffffff",
-    "border":  "#26324a" if IS_DARK else "#e2e8f0",
-    "muted":   "#94a3b8" if IS_DARK else "#64748b",
-    "text":    "#e2e8f0" if IS_DARK else "#334155",
-    "title":   "#f8fafc" if IS_DARK else "#0f172a",
-    "heading": "#93c5fd" if IS_DARK else "#1e3a8a",
-    "sidebar": "#0f172a" if IS_DARK else "#ffffff",
-    "grid":    "#26324a" if IS_DARK else "#e5e7eb",
-    "node":    "#cbd5e1" if IS_DARK else "#1e293b",
-}
-
-# ---------- one consistent look for every chart ----------
+# ---------- charts: let Streamlit colour them for light AND dark mode ----------
 import plotly.io as pio
-pio.templates["lab"] = go.layout.Template(pio.templates["plotly_dark" if IS_DARK else "plotly_white"])
-pio.templates["lab"].layout.update(
-    font=dict(family="Inter, Segoe UI, sans-serif", size=13, color=P["text"]),
-    title=dict(font=dict(size=15, color=P["title"])),
-    paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-    xaxis=dict(gridcolor=P["grid"], zerolinecolor=P["grid"]),
-    yaxis=dict(gridcolor=P["grid"], zerolinecolor=P["grid"]),
-    margin=dict(l=10, r=10, t=50, b=10),
-    hoverlabel=dict(font_size=12),
-)
-pio.templates.default = "lab"
+pio.templates.default = "streamlit"   # Streamlit re-colours charts live when the theme changes
 
-# ---------- page styling ----------
-st.markdown(f"""
+# ---------- page styling (see-through colours work on light and dark backgrounds) ----------
+st.markdown("""
 <style>
-.block-container {{padding-top: 3.5rem; padding-bottom: 3rem; max-width: 1400px;}}
+.block-container {padding-top: 3.5rem; padding-bottom: 3rem; max-width: 1400px;}
 
-/* header banner */
-.hero {{background: linear-gradient(120deg, #1e3a8a 0%, #2563eb 60%, #3b82f6 100%);
+/* header banner (has its own colours, so it looks the same in both modes) */
+.hero {background: linear-gradient(120deg, #1e3a8a 0%, #2563eb 60%, #3b82f6 100%);
        color: #fff; padding: 1.4rem 1.8rem; border-radius: 16px; margin-bottom: 1.2rem;
-       box-shadow: 0 6px 20px rgba(37, 99, 235, 0.25);}}
-.hero h1 {{color: #fff; font-size: 1.9rem; margin: 0 0 0.3rem 0; padding: 0;}}
-.hero p {{color: #dbeafe; margin: 0; font-size: 1rem;}}
-.hero .chips {{margin-top: 0.8rem;}}
-.hero .chip {{display: inline-block; background: rgba(255,255,255,0.16); color: #fff;
-             padding: 0.2rem 0.7rem; border-radius: 999px; font-size: 0.82rem; margin: 0 0.35rem 0.3rem 0;}}
+       box-shadow: 0 6px 20px rgba(37, 99, 235, 0.25);}
+.hero h1 {color: #fff; font-size: 1.9rem; margin: 0 0 0.3rem 0; padding: 0;}
+.hero p {color: #dbeafe; margin: 0; font-size: 1rem;}
+.hero .chips {margin-top: 0.8rem;}
+.hero .chip {display: inline-block; background: rgba(255,255,255,0.16); color: #fff;
+             padding: 0.2rem 0.7rem; border-radius: 999px; font-size: 0.82rem; margin: 0 0.35rem 0.3rem 0;}
 
-/* metric cards */
-[data-testid="stMetric"] {{background: {P["card"]}; border: 1px solid {P["border"]}; border-radius: 12px;
-                          padding: 0.8rem 1rem; box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);}}
-[data-testid="stMetricLabel"] {{color: {P["muted"]};}}
-[data-testid="stMetricValue"] {{font-size: 1.7rem;}}
+/* metric cards: a light grey tint, so they work on white AND on dark backgrounds */
+[data-testid="stMetric"] {background: rgba(128, 128, 128, 0.07);
+                          border: 1px solid rgba(128, 128, 128, 0.25); border-radius: 12px;
+                          padding: 0.8rem 1rem;}
+[data-testid="stMetricLabel"] {opacity: 0.75;}
+[data-testid="stMetricValue"] {font-size: 1.7rem;}
 
 /* tabs */
-button[data-baseweb="tab"] {{font-size: 1rem; font-weight: 600; padding: 0.6rem 1rem;}}
+button[data-baseweb="tab"] {font-size: 1rem; font-weight: 600; padding: 0.6rem 1rem;}
 
-/* sidebar */
-[data-testid="stSidebar"] {{background: {P["sidebar"]}; border-right: 1px solid {P["border"]};}}
+/* sidebar: keep the theme's own background, just add a thin edge */
+[data-testid="stSidebar"] {border-right: 1px solid rgba(128, 128, 128, 0.2);}
 
-/* section headings */
-h3 {{color: {P["heading"]};}}
+/* section headings: a mid blue that is readable on white and on dark */
+h3 {color: #3b82f6;}
 
 /* footer */
-.footer {{color: {P["muted"]}; font-size: 0.82rem; text-align: center;
-          border-top: 1px solid {P["border"]}; margin-top: 2.5rem; padding-top: 0.8rem;}}
+.footer {opacity: 0.7; font-size: 0.82rem; text-align: center;
+         border-top: 1px solid rgba(128, 128, 128, 0.25); margin-top: 2.5rem; padding-top: 0.8rem;}
 
 /* small screens: smaller banner title */
-@media (max-width: 640px) {{ .hero h1 {{font-size: 1.4rem;}} }}
+@media (max-width: 640px) { .hero h1 {font-size: 1.4rem;} }
 </style>
 """, unsafe_allow_html=True)
 
@@ -301,7 +278,7 @@ with tabs[0]:
     st.markdown("##### Input feature distributions")
     cols = st.columns(3)
     for col, feature in zip(cols, FEATURES):
-        fig = px.histogram(df, x=feature, nbins=20, template="lab",
+        fig = px.histogram(df, x=feature, nbins=20, template="streamlit",
                            color_discrete_sequence=["#2563eb"])
         fig.update_layout(height=260, margin=dict(t=20, b=10))
         col.plotly_chart(fig, width="stretch")
@@ -315,7 +292,7 @@ with tabs[0]:
         counts.append({"target": t, "value": "0", "count": int((df[t] == 0).sum())})
         counts.append({"target": t, "value": "1", "count": int((df[t] == 1).sum())})
     fig = px.bar(pd.DataFrame(counts), x="target", y="count", color="value",
-                 barmode="group", text="count", template="lab",
+                 barmode="group", text="count", template="streamlit",
                  color_discrete_map={"0": "#94a3b8", "1": "#ea580c"})
     fig.update_layout(height=300)
     left.plotly_chart(fig, width="stretch")
@@ -324,7 +301,7 @@ with tabs[0]:
     combo = df.groupby(TARGETS).size().reset_index(name="count")
     combo["combination"] = ("(" + combo["overheat_alert"].astype(str) + ","
                             + combo["fault_alert"].astype(str) + ")")
-    fig = px.bar(combo, x="combination", y="count", text="count", template="lab",
+    fig = px.bar(combo, x="combination", y="count", text="count", template="streamlit",
                  title="(overheat, fault) — both alerts can be 1",
                  color_discrete_sequence=["#2563eb"])
     fig.update_layout(height=300)
@@ -396,7 +373,7 @@ def network_figure(net, acts=None, selected=None, W=None):
             hoverinfo="text",
             marker=dict(size=44, color=vals, colorscale="Blues",
                         cmin=0, cmax=max(1.0, float(np.max(vals))),
-                        line=dict(color=P["node"], width=2)),
+                        line=dict(color="#64748b", width=2)),
             showlegend=False))
         for k, (x, y) in enumerate(layer):
             fig.add_annotation(x=x, y=y - 0.075, text=names[li][k], showarrow=False,
@@ -411,7 +388,7 @@ def network_figure(net, acts=None, selected=None, W=None):
     for x, text in zip(xs, headings):
         fig.add_annotation(x=x, y=1.06, text=text, showarrow=False, font=dict(size=12))
 
-    fig.update_layout(height=520, template="lab",
+    fig.update_layout(height=520, template="streamlit",
                       margin=dict(l=10, r=10, t=60, b=10),
                       xaxis=dict(visible=False, range=[-0.08, 1.08]),
                       yaxis=dict(visible=False, range=[0, 1.12]))
@@ -522,7 +499,7 @@ with tabs[1]:
                                     y=[s[wl - 1][i, j] for s in snaps],
                                     name=f"w[{i+1},{j+1}]", mode="lines")
             fig.update_layout(xaxis_title="Epoch (0 = starting weights)",
-                              yaxis_title="Weight value", template="lab", height=380)
+                              yaxis_title="Weight value", template="streamlit", height=380)
             st.plotly_chart(fig, width="stretch")
 
             ep = st.slider("Show the network at epoch", 0, len(snaps) - 1, len(snaps) - 1)
@@ -607,7 +584,7 @@ with tabs[2]:
                         name="Best validation", marker=dict(size=12, color="#16a34a", symbol="star"))
         fig.update_layout(title="Binary cross-entropy vs epoch (recorded after every epoch)",
                           xaxis_title="Epoch", yaxis_title="Binary cross-entropy loss",
-                          template="lab", height=430,
+                          template="streamlit", height=430,
                           legend=dict(orientation="h", y=-0.2))
         st.plotly_chart(fig, width="stretch")
 
@@ -622,14 +599,14 @@ with tabs[2]:
         fig2.add_scatter(x=h["epoch"], y=h["val_acc"], name="Validation", line=dict(color="#ea580c"))
         fig2.update_layout(title="Binary accuracy (averaged over both labels)",
                            xaxis_title="Epoch", yaxis_title="Accuracy",
-                           yaxis_tickformat=".0%", template="lab" , height=320)
+                           yaxis_tickformat=".0%", template="streamlit" , height=320)
         left.plotly_chart(fig2, width="stretch")
 
         fig3 = go.Figure()
         fig3.add_scatter(x=h["epoch"], y=h["grad_norm"], name="Gradient norm",
                          line=dict(color="#7c3aed"))
         fig3.update_layout(title="Gradient norm per epoch", xaxis_title="Epoch",
-                           yaxis_title="‖∇Loss‖", template="lab", height=320)
+                           yaxis_title="‖∇Loss‖", template="streamlit", height=320)
         right.plotly_chart(fig3, width="stretch")
 
         st.caption("Gradient descent update: **W ← W − η · ∂Loss/∂W**. A shrinking gradient "
@@ -677,7 +654,7 @@ with tabs[3]:
         fig.add_vline(x=threshold, line_dash="dash",
                       annotation_text=f"threshold {threshold:.2f}")
         fig.update_layout(xaxis=dict(range=[0, 1.1], tickformat=".0%", title="P(alert = 1)"),
-                          template="lab", height=260, margin=dict(t=20))
+                          template="streamlit", height=260, margin=dict(t=20))
         st.plotly_chart(fig, width="stretch")
 
         d = st.columns(2)
@@ -812,14 +789,14 @@ with tabs[4]:
             fig.add_scatter(x=h["epoch"], y=h["val_loss"], name=f"val · {label}",
                             line=dict(color=col, width=3))
         fig.update_layout(title=exp_name, xaxis_title="Epoch",
-                          yaxis_title="Binary cross-entropy", template="lab",
+                          yaxis_title="Binary cross-entropy", template="streamlit",
                           height=450, legend=dict(orientation="h", y=-0.25))
         st.plotly_chart(fig, width="stretch")
 
         bars = table.assign(config=[f"lr={r.learning_rate} {r.activation} {r.epochs}ep"
                                     for r in table.itertuples()])
         fig2 = px.bar(bars, x="config", y=["final_train_loss", "final_val_loss"],
-                      barmode="group", template="lab", height=320,
+                      barmode="group", template="streamlit", height=320,
                       labels={"value": "BCE", "variable": ""})
         st.plotly_chart(fig2, width="stretch")
 
@@ -872,7 +849,7 @@ with tabs[5]:
     fig.add_scatter(x=z, y=sig * (1 - sig), name="Sigmoid slope (max 0.25)",
                     line=dict(color="#ea580c", dash="dot"))
     fig.update_layout(xaxis_title="z (weighted sum)", yaxis_title="output",
-                      yaxis_range=[-0.2, 2], template="lab" , height=360)
+                      yaxis_range=[-0.2, 2], template="streamlit" , height=360)
     st.plotly_chart(fig, width="stretch")
     st.caption("Sigmoid's slope is never above 0.25, so gradients shrink layer by layer "
                "(vanishing gradients). ReLU's slope is 1 when z > 0 and 0 when z < 0.")
