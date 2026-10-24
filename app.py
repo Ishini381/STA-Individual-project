@@ -164,6 +164,26 @@ if train_btn:
             "val_acc": round(st.session_state.history["val_acc"][-1], 4),
         })
 
+        # ---- feedback: what happened, and how it compares with the previous run ----
+        h_now = st.session_state.history
+        val_now = h_now["val_loss"][-1]
+        feedback = (f"**Training finished** ({st.session_state.run_mode} run: lr {lr}, "
+                    f"{epochs} epochs, {act}). Training loss **{h_now['train_loss'][-1]:.4f}**, "
+                    f"validation loss **{val_now:.4f}**, validation accuracy "
+                    f"**{h_now['val_acc'][-1]:.1%}**.")
+        if len(st.session_state.run_log) >= 2:
+            val_prev = st.session_state.run_log[-2]["val_loss"]
+            change = val_now - val_prev
+            if change < -0.001:
+                feedback += f" 📉 That is **{abs(change):.4f} lower** than your previous run — better."
+            elif change > 0.001:
+                feedback += f" 📈 That is **{change:.4f} higher** than your previous run — worse."
+            else:
+                feedback += " ➖ About the same as your previous run."
+        feedback += " See **📉 D · Learning curves** for the full picture."
+        st.session_state.feedback = feedback
+        st.toast(f"Training finished — validation loss {val_now:.4f}", icon="✅")
+
 model = st.session_state.model
 history = st.session_state.history
 
@@ -195,6 +215,36 @@ st.markdown(f"""
   </div>
 </div>
 """, unsafe_allow_html=True)
+
+# ---- feedback after training (shown once, right after a run) ----
+fb = st.session_state.pop("feedback", None)
+if fb:
+    st.success(fb, icon="✅")
+
+# ---- quick-start guide: open for new users, folded away once trained ----
+with st.expander("🚀 Quick-start guide — new here? Start with these 5 steps",
+                 expanded=history is None):
+    q1, q2 = st.columns([3, 2])
+    with q1:
+        st.markdown("""
+1. **Look at the data** in **📊 A · Data**: 180 machines, 3 sensors, 2 alerts.
+2. **Train the network**: in the sidebar (👈 open it with **»** if it's hidden), keep the
+   defaults and press **▶ Train / Retrain**.
+3. **Watch it learn** in **📉 D · Learning curves**: both losses should fall.
+4. **Look inside** in **🕸️ B · Network**: pick a machine and a neuron to see its
+   weighted sum *z* and activation *a*.
+5. **Try it yourself** in **🎯 E · Predictions** (move the sliders) and compare settings in
+   **🧪 F · Experiments**.
+""")
+    with q2:
+        st.markdown("""
+**💡 Tips**
+- Hover over any **ⓘ** icon for a short explanation.
+- Try learning rates **0.001**, **0.01** and **0.1** to see slow, good and unstable learning.
+- **Start fresh** gives a fair comparison; **Continue** adds more epochs.
+- New to neural networks? Read **📘 How it works** first.
+- 🌗 Switch light/dark mode: **⋮ (top right) → Settings → Theme**.
+""")
 
 tabs = st.tabs(["📊 A · Data", "🕸️ B · Network", "📉 D · Learning curves",
                 "🎯 E · Predictions", "🧪 F · Experiments", "📘 How it works"])
