@@ -80,22 +80,27 @@ if "exp_results" not in st.session_state:
     st.session_state.exp_results = {}
 
 with st.sidebar:
-    st.header("C · Training controls")
+    st.markdown("## ⚙️ C · Training controls")
+    st.caption("Change the settings, then press **Train / Retrain**.")
 
-    lr = st.select_slider("Learning rate",
+    st.markdown("**Hyperparameters**")
+    lr = st.select_slider("Learning rate (η)",
                           options=[0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1],
                           value=0.01)
     epochs = st.slider("Number of epochs", min_value=20, max_value=500,
                        value=100, step=10)
     act = st.radio("Hidden activation", ["ReLU", "Sigmoid"], horizontal=True)
+
+    st.divider()
+    st.markdown("**Reproducibility**")
     seed = st.number_input("Initialisation seed", min_value=0, max_value=9999, value=42,
                            help="Same seed = same starting weights")
     mode = st.radio("When I press Train…",
                     ["Start fresh (same seed)", "Continue training current model"])
 
-    col1, col2 = st.columns(2)
-    train_btn = col1.button("▶ Train", type="primary")
-    reset_btn = col2.button("⟲ Reset")
+    st.divider()
+    train_btn = st.button("▶ Train / Retrain", type="primary", width="stretch")
+    reset_btn = st.button("⟲ Reset to starting weights", width="stretch")
 
 if reset_btn:
     new_model(act, int(seed))
@@ -113,7 +118,7 @@ if train_btn:
             new_model(act, int(seed))              # fresh weights from the seed
             model = st.session_state.model
 
-        with st.spinner("Training..."):
+        with st.spinner(f"Training for {epochs} epochs..."):
             hist, snaps = model.train(data["X_train"], data["Y_train"],
                                       data["X_val"], data["Y_val"],
                                       lr=lr, epochs=epochs, batch_size=16)
