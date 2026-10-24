@@ -86,17 +86,23 @@ with st.sidebar:
     st.markdown("**Hyperparameters**")
     lr = st.select_slider("Learning rate (η)",
                           options=[0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1],
-                          value=0.01)
+                          value=0.01,
+                          help="Size of each gradient-descent step. Too small = slow learning; "
+                               "too large = unstable, zig-zagging loss.")
     epochs = st.slider("Number of epochs", min_value=20, max_value=500,
-                       value=100, step=10)
-    act = st.radio("Hidden activation", ["ReLU", "Sigmoid"], horizontal=True)
+                       value=100, step=10,
+                       help="One epoch = one full pass over the 126 training rows.")
+    act = st.radio("Hidden activation", ["ReLU", "Sigmoid"], horizontal=True,
+                   help="Used in both hidden layers. The two output neurons always use sigmoid.")
 
     st.divider()
     st.markdown("**Reproducibility**")
     seed = st.number_input("Initialisation seed", min_value=0, max_value=9999, value=42,
                            help="Same seed = same starting weights")
     mode = st.radio("When I press Train…",
-                    ["Start fresh (same seed)", "Continue training current model"])
+                    ["Start fresh (same seed)", "Continue training current model"],
+                    help="Start fresh = identical starting weights, for fair comparisons. "
+                         "Continue = add more epochs to the current weights.")
 
     st.divider()
     train_btn = st.button("▶ Train / Retrain", type="primary", width="stretch")
@@ -384,11 +390,14 @@ with tabs[1]:
     st.subheader("B · Interactive network diagram and forward propagation")
 
     split = st.radio("Pick a sample from", ["train", "val", "test"], horizontal=True,
+                     help="Which part of the data to take a machine from. The network is only "
+                          "trained on the Training rows.",
                      format_func=lambda s: {"train": "Training", "val": "Validation",
                                             "test": "Test"}[s])
     part = data[f"{split}_df"]
     ids = part[ID_COL].tolist()
-    machine = st.selectbox("Machine observation", ids)
+    machine = st.selectbox("Machine observation", ids,
+                           help="The diagram and numbers below update for this machine.")
     r = ids.index(machine)                          # row number of that machine
 
     x_raw = part.loc[r, FEATURES].to_numpy(float)
@@ -405,10 +414,12 @@ with tabs[1]:
 
     with right:
         st.markdown("**🔬 Inspect a neuron**")
-        layer = st.selectbox("Layer", [1, 2, 3], format_func=lambda l: LAYER_NAMES[l])
+        layer = st.selectbox("Layer", [1, 2, 3], format_func=lambda l: LAYER_NAMES[l],
+                             help="The layer the neuron belongs to. Its incoming lines are "
+                                  "highlighted on the diagram.")
         neuron = st.selectbox("Neuron", list(range(model.layer_sizes[layer])),
-                              format_func=lambda k: f"#{k+1}")
-
+                              format_func=lambda k: f"#{k+1}",
+                              help="Neurons are numbered from the top of the diagram.")
     with left:
         st.plotly_chart(network_figure(model, acts, selected=(layer, neuron)), width="stretch")
         st.caption("Blue line = positive weight, red = negative. Thicker = larger |weight|. "
@@ -454,7 +465,8 @@ with tabs[1]:
     with st.expander("🔎 Step-through: full forward propagation for this machine"):
         st.latex(r"Z^{(l)} = A^{(l-1)}W^{(l)} + b^{(l)}, \quad A^{(l)} = g(Z^{(l)}), "
                  r"\quad \hat{Y} = \sigma(Z^{(3)})")
-        step = st.slider("Show up to step", 1, L, L)
+        step = st.slider("Show up to step", 1, L, L,
+                         help="Reveal the forward pass one layer at a time.")
         for l in range(1, step + 1):
             fn = "sigmoid" if l == L else model.hidden_activation
             st.markdown(f"**Step {l}: {LAYER_NAMES[l-1]} → {LAYER_NAMES[l]}** ({fn})")
@@ -538,15 +550,21 @@ with tabs[2]:
         st.info("👈 Press **▶ Train / Retrain** in the sidebar to record a training history.")
     else:
         n_ep = len(history["epoch"])
-        view = st.slider("Step through training: show up to epoch", 1, n_ep, n_ep)
+        view = st.slider("Step through training: show up to epoch", 1, n_ep, n_ep,
+                         help="Drag left to replay training from the start.")
         h = {k: v[:view] for k, v in history.items()}      # history cut at that epoch
 
         c = st.columns(5)
-        c[0].metric("Epoch", h["epoch"][-1])
-        c[1].metric("Training loss (BCE)", f"{h['train_loss'][-1]:.4f}")
-        c[2].metric("Validation loss (BCE)", f"{h['val_loss'][-1]:.4f}")
-        c[3].metric("Train accuracy", f"{h['train_acc'][-1]:.1%}")
-        c[4].metric("Validation accuracy", f"{h['val_acc'][-1]:.1%}")
+        c[0].metric("Epoch", h["epoch"][-1], help="Epochs completed so far.")
+        c[1].metric("Training loss (BCE)", f"{h['train_loss'][-1]:.4f}",
+                    help="Binary cross-entropy on the 126 training rows. Lower is better.")
+        c[2].metric("Validation loss (BCE)", f"{h['val_loss'][-1]:.4f}",
+                    help="Loss on 27 rows the network never trains on — shows how well it "
+                         "generalises. Lower is better.")
+        c[3].metric("Train accuracy", f"{h['train_acc'][-1]:.1%}",
+                    help="Share of correct 0/1 decisions (threshold 0.5), averaged over both alerts.")
+        c[4].metric("Validation accuracy", f"{h['val_acc'][-1]:.1%}",
+                    help="The same accuracy, measured on the validation rows.")
 
         fig = go.Figure()
         fig.add_scatter(x=h["epoch"], y=h["train_loss"], name="Training loss",
@@ -605,10 +623,13 @@ with tabs[3]:
             high = float(df[feature].max())
             start = float(round(df[feature].median(), 2))
             step = 0.01 if feature == "vibration_mm_s" else 0.1
-            values.append(st.slider(label, low, high, start, step=step))
+            values.append(st.slider(label, low, high, start, step=step,
+                                    help=f"Range {low:g}–{high:g}, from the dataset. "
+                                         f"Starts at the median."))
 
-        threshold = st.slider("Decision threshold", 0.05, 0.95, 0.50, 0.05)
-
+        threshold = st.slider("Decision threshold", 0.05, 0.95, 0.50, 0.05,
+                              help="An alert is raised when its probability is at or above "
+                                   "this value. Lower = more alerts (fewer missed, more false alarms).")
         x_scaled = scaler.transform(np.array(values).reshape(1, -1))
         st.caption("Scaled with the **training** mean and std: " +
                    ", ".join(f"{f.split('_')[0]} → {v:+.3f}"
@@ -646,7 +667,9 @@ with tabs[3]:
     if history is None:
         st.info("Train a model first.")
     else:
-        if st.button("Reveal test-set evaluation for the current model"):
+        if st.button("Reveal test-set evaluation for the current model",
+                     help="Hidden on purpose: choose settings using validation results first, "
+                          "then check the test set once."):
             st.session_state.test_revealed = True
 
         if st.session_state.test_revealed:
@@ -722,13 +745,17 @@ with tabs[4]:
                 "(identical starting weights), the same data split and the same optimiser "
                 "(mini-batch SGD). Only the setting being studied changes.")
 
-    exp_name = st.selectbox("Experiment", list(EXPERIMENT_SETS.keys()))
+    exp_name = st.selectbox("Experiment", list(EXPERIMENT_SETS.keys()),
+                            help="Each experiment changes only one setting; everything else "
+                                 "stays the same.")
 
     c1, c2 = st.columns(2)
-    if c1.button("▶ Run this experiment", type="primary"):
+    if c1.button("▶ Run this experiment", type="primary",
+                 help="Trains each configuration of the selected experiment from fresh weights."):
         with st.spinner("Training each configuration..."):
             st.session_state.exp_results[exp_name] = run_set(data, EXPERIMENT_SETS[exp_name])
-    if c2.button("▶ Run ALL three experiments"):
+    if c2.button("▶ Run ALL three experiments",
+                 help="Runs all 8 configurations. Takes a few seconds."):
         with st.spinner("Running all experiments..."):
             for name, configs in EXPERIMENT_SETS.items():
                 st.session_state.exp_results[name] = run_set(data, configs)
